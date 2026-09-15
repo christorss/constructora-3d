@@ -3,6 +3,8 @@ const menuButton = document.querySelector('#menu-toggle')
 const navigation = document.querySelector('#site-nav')
 const progress = document.querySelector('.page-progress span')
 const videoToggle = document.querySelector('[data-video-toggle]')
+const siteVideos = document.querySelectorAll('video')
+const heroVideo = document.querySelector('.hero-video')
 const showcaseVideo = document.querySelector('.experience-media video')
 const form = document.querySelector('#contact-form')
 const status = document.querySelector('#form-status')
@@ -45,12 +47,47 @@ if ('IntersectionObserver' in window) {
   revealItems.forEach((item) => item.classList.add('is-visible'))
 }
 
+const prepareInlineVideo = (video) => {
+  video.muted = true
+  video.defaultMuted = true
+  video.playsInline = true
+  video.setAttribute('muted', '')
+  video.setAttribute('playsinline', '')
+  video.setAttribute('webkit-playsinline', '')
+}
+
+const tryPlayVideo = async (video) => {
+  if (!video) return false
+  prepareInlineVideo(video)
+  try {
+    await video.play()
+    return true
+  } catch {
+    return false
+  }
+}
+
+siteVideos.forEach(prepareInlineVideo)
+tryPlayVideo(heroVideo)
+
+const unlockVideos = () => {
+  tryPlayVideo(heroVideo)
+  if (showcaseVideo && !showcaseVideo.paused) tryPlayVideo(showcaseVideo)
+  window.removeEventListener('touchstart', unlockVideos)
+  window.removeEventListener('pointerdown', unlockVideos)
+}
+
+window.addEventListener('touchstart', unlockVideos, { once: true, passive: true })
+window.addEventListener('pointerdown', unlockVideos, { once: true })
+
 videoToggle?.addEventListener('click', async () => {
   if (!showcaseVideo) return
   if (showcaseVideo.paused) {
-    await showcaseVideo.play()
-    videoToggle.innerHTML = '<span aria-hidden="true">Ⅱ</span> Pausar recorrido'
-    videoToggle.setAttribute('aria-label', 'Pausar video de visualización')
+    const played = await tryPlayVideo(showcaseVideo)
+    if (played) {
+      videoToggle.innerHTML = '<span aria-hidden="true">Ⅱ</span> Pausar recorrido'
+      videoToggle.setAttribute('aria-label', 'Pausar video de visualización')
+    }
   } else {
     showcaseVideo.pause()
     videoToggle.innerHTML = '<span aria-hidden="true">▶</span> Ver recorrido'
